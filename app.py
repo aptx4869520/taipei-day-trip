@@ -5,6 +5,7 @@ from database import get_connection
 
 app = FastAPI()
 
+
 #------------------------------
 
 # Static Pages (Never Modify Code in this Block)
