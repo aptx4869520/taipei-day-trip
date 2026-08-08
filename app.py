@@ -25,7 +25,7 @@ async def thankyou(request: Request):
 # ------------------------------
 
 
-PAGE_SIZE = 12
+PAGE_SIZE = 8
 
 
 def format_attraction(
