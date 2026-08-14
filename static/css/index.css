@@ -87,15 +87,34 @@ button {
 }
 
 .hero {
+  position: relative;
   height: 320px;
-  color: var(--white);
-  background: #77bbcc url("/static/images/welcome-desktop.png") center / cover no-repeat;
+  overflow: visible;
+  background: #77bbcc;
+}
+
+.hero__media {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+.hero__background {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 1920px;
+  height: 480px;
+  max-width: none;
+  transform: translateX(-50%);
 }
 
 .hero__content {
+  position: relative;
+  z-index: 1;
   width: min(100%, var(--content-width));
   margin: 0 auto;
-  padding: 75px 10px 0;
+  padding: 85px 10px 0;
 }
 
 .hero__slogan {
@@ -223,8 +242,17 @@ button {
 }
 
 .mrt-bar__arrow {
-  flex: 0 0 62px;
-  padding: 9px 15px;
+  flex: 0 0 47px;
+  padding-top: 9px;
+  padding-bottom: 9px;
+}
+
+.mrt-bar__arrow:first-child {
+  padding-left: 15px;
+}
+
+.mrt-bar__arrow:last-child {
+  padding-right: 15px;
 }
 
 .mrt-bar__arrow img {
@@ -262,8 +290,9 @@ button {
 .attraction-list {
   padding: 15px;
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, 270px);
   gap: 30px;
+  justify-content: center;
 }
 
 .attraction-card {
@@ -357,23 +386,20 @@ button {
   margin-top: auto;
 }
 
-@media (max-width: 1199px) {
-  .attraction-list {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
 
 @media (max-width: 600px) {
+
+    .hero__background {
+    width: auto;
+    height: 320px;
+  }
+
   .navigation__logo {
     font-size: 30px;
   }
 
-  .hero {
-    background-image: url("/static/images/welcome-mobile.png");
-  }
-
   .hero__content {
-    padding: 76px 20px 0;
+    padding: 86px 20px 0;
   }
 
   .search {
