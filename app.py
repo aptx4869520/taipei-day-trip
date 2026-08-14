@@ -1,10 +1,32 @@
 from fastapi import *
+from fastapi.exception_handlers import request_validation_exception_handler
+from fastapi.exceptions import RequestValidationError
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from typing import Any, cast
 from database import get_connection
 
 app = FastAPI()
+
+
+@app.exception_handler(RequestValidationError)
+async def handle_request_validation_error(
+    request: Request,
+    error: RequestValidationError,
+):
+    if request.url.path.startswith("/api/attraction/"):
+        return JSONResponse(
+            status_code=400,
+            content={
+                "error": True,
+                "message": "景點編號不正確",
+            },
+        )
+
+    return await request_validation_exception_handler(
+        request,
+        error,
+    )
 
 
 #------------------------------
@@ -213,6 +235,15 @@ async def get_attraction(attraction_id: int):
     cursor = None
 
     try:
+        if attraction_id < 1:
+            return JSONResponse(
+                status_code=400,
+                content={
+                    "error": True,
+                    "message": "景點編號不正確",
+                },
+            )
+
         connection = get_connection()
         cursor = connection.cursor(dictionary=True)
 
