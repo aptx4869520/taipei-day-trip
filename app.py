@@ -1,5 +1,6 @@
 from fastapi import *
 from fastapi.responses import FileResponse, JSONResponse
+from fastapi.staticfiles import StaticFiles
 from typing import Any, cast
 from database import get_connection
 
@@ -25,6 +26,9 @@ async def thankyou(request: Request):
 # ------------------------------
 
 
+app.mount("/static", StaticFiles(directory="static"), name="static")
+
+
 PAGE_SIZE = 8
 
 
@@ -48,7 +52,7 @@ def format_attraction(
 
 @app.get("/api/attractions")
 async def get_attractions(
-    page: int = Query(0, ge=0),
+    page: int = Query(..., ge=0),
     keyword: str | None = None,
     category: str | None = None,
 ):
