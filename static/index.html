@@ -1,11 +1,84 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-Hant">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Index</title>
+  <title>台北一日遊</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="/static/css/index.css">
 </head>
 <body>
-  
+  <header class="navigation">
+    <div class="navigation__content">
+      <a class="navigation__logo" href="/">台北一日遊</a>
+      <nav class="navigation__actions" aria-label="會員功能">
+        <button type="button">預定行程</button>
+        <button type="button">登入/註冊</button>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="hero__media">
+        <img class="hero__background" src="/static/images/welcome.png" alt="" aria-hidden="true">
+      </div>
+
+      <div class="hero__content">
+        <div class="hero__slogan">
+          <h1>輕鬆享受台北一日悠閒</h1>
+          <p>探索每個角落，體驗城市的深度旅遊行程</p>
+        </div>
+
+        <form id="search-form" class="search" role="search">
+          <div class="category">
+            <button
+              id="category-button"
+              class="category__button"
+              type="button"
+              aria-expanded="false"
+              aria-controls="category-menu"
+            >
+              <span id="selected-category">全部分類</span>
+              <span aria-hidden="true">▼</span>
+            </button>
+            <div id="category-menu" class="category__menu" hidden></div>
+          </div>
+
+          <label class="visually-hidden" for="keyword-input">景點關鍵字</label>
+          <input
+            id="keyword-input"
+            type="search"
+            placeholder="輸入景點名稱查詢"
+            autocomplete="off"
+          >
+
+          <button class="search__button" type="submit" aria-label="搜尋">
+            <img src="/static/images/icon-search.png" alt="">
+          </button>
+        </form>
+      </div>
+    </section>
+
+    <section class="attractions" aria-label="景點列表">
+      <div class="mrt-bar">
+        <button id="mrt-left" class="mrt-bar__arrow" type="button" aria-label="向左查看更多捷運站">
+          <img src="/static/images/arrow-left.png" alt="">
+        </button>
+        <div id="mrt-list" class="mrt-bar__list"></div>
+        <button id="mrt-right" class="mrt-bar__arrow" type="button" aria-label="向右查看更多捷運站">
+          <img src="/static/images/arrow-right.png" alt="">
+        </button>
+      </div>
+
+      <div id="attraction-list" class="attraction-list"></div>
+      <div id="load-sentinel" aria-hidden="true"></div>
+      <p id="empty-message" class="message" hidden>查無符合條件的景點</p>
+      <p id="error-message" class="message message--error" hidden>資料載入失敗，請稍後再試</p>
+    </section>
+  </main>
+
+  <footer class="footer">COPYRIGHT © 2021 台北一日遊</footer>
+  <script src="/static/js/index.js"></script>
 </body>
 </html>
