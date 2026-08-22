@@ -51,6 +51,7 @@ button {
 .navigation {
   height: 54px;
   background: var(--white);
+  box-shadow: 0 1px var(--gray-20);
 }
 
 .navigation__content {
