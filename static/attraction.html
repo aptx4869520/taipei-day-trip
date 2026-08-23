@@ -1,11 +1,115 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-Hant">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Attraction</title>
+  <title>台北一日遊</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="/static/css/attraction.css">
 </head>
+
 <body>
-  
+
+  <header class="navigation">
+    <div class="navigation__content">
+      <a class="navigation__logo" href="/">台北一日遊</a>
+
+      <nav class="navigation__actions" aria-label="會員功能">
+        <button type="button">預定行程</button>
+        <button type="button">登入/註冊</button>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+
+    <p id="attraction-error" class="page-message page-message--error" role="alert" hidden></p>
+
+    <section class="attraction">
+
+      <div class="attraction__gallery">
+
+        <img id="attraction-image" class="slideshow__image" alt="">
+
+        <button type="button" class="slideshow__arrow slideshow__arrow--left" aria-label="上一張圖片" hidden>
+          <img src="/static/images/arrow-left.png" alt="">
+        </button>
+
+        <button type="button" class="slideshow__arrow slideshow__arrow--right" aria-label="下一張圖片" hidden>
+          <img src="/static/images/arrow-right.png" alt="">
+        </button>
+
+        <div id="slideshow-indicators" class="slideshow__indicators" aria-hidden="true" hidden></div>
+
+      </div>
+
+      <div class="attraction__profile">
+
+        <h1 id="attraction-name" class="attraction__name"></h1>
+        <p id="attraction-meta" class="attraction__meta"></p>
+
+        <div class="booking">
+          <h2 class="booking__title">訂購導覽行程</h2>
+
+          <p class="booking__description">
+            以此景點為中心的一日行程，帶您探索城市角落故事
+          </p>
+
+          <div class="booking__field booking__field--date">
+            <label class="booking__label" for="booking-date">選擇日期： </label>
+            <input id="booking-date" type="date" class="booking__date">
+          </div>
+
+          <div class="booking__field booking__field--time">
+            <span class="booking__label">選擇時間： </span>
+
+            <label class="booking__radio">
+              <input type="radio" name="time" value="morning" checked>
+              <span>上半天</span>
+            </label>
+
+            <label class="booking__radio">
+              <input type="radio" name="time" value="afternoon">
+              <span>下半天</span>
+            </label>
+          </div>
+
+          <div class="booking__field booking__field--price">
+            <span class="booking__label">導覽費用： </span>
+            <span id="booking-price" class="booking__price">新台幣 2000 元</span>
+          </div>
+
+          <button type="button" class="booking__button">開始預約行程</button>
+
+        </div>
+      </div>
+
+    </section>
+
+    <hr class="separator">
+
+    <section class="information">
+
+      <p id="attraction-description" class="information__description"></p>
+
+      <div class="information__group">
+        <h2 class="information__title">景點地址：</h2>
+        <p id="attraction-address" class="information__text"></p>
+      </div>
+
+      <div class="information__group">
+        <h2 class="information__title">交通方式：</h2>
+        <p id="attraction-transport" class="information__text"></p>
+      </div>
+
+    </section>
+
+  </main>
+
+  <footer class="footer">
+    COPYRIGHT © 2021 台北一日遊
+  </footer>
+
+  <script src="/static/js/attraction.js"></script>
 </body>
 </html>
