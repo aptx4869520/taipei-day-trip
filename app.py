@@ -1,12 +1,156 @@
-from fastapi import *
+import base64
+import hashlib
+import hmac
+import os
+import secrets
+from datetime import datetime, timedelta, timezone
+from typing import Any, cast
+
+import jwt
+from fastapi import FastAPI, Query, Request
 from fastapi.exception_handlers import request_validation_exception_handler
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
-from typing import Any, cast
+from mysql.connector import IntegrityError
+from pydantic import BaseModel, EmailStr
+
 from database import get_connection
 
+
 app = FastAPI()
+
+
+JWT_SECRET = os.getenv("JWT_SECRET")
+JWT_ALGORITHM = "HS256"
+JWT_EXPIRATION_DAYS = 7
+PASSWORD_ITERATIONS = 600_000
+
+
+class UserSignUpInput(BaseModel):
+    name: str
+    email: EmailStr
+    password: str
+
+
+class UserSignInInput(BaseModel):
+    email: EmailStr
+    password: str
+
+
+def hash_password(password: str) -> str:
+    salt = secrets.token_bytes(16)
+
+    password_hash = hashlib.pbkdf2_hmac(
+        "sha256",
+        password.encode("utf-8"),
+        salt,
+        PASSWORD_ITERATIONS,
+    )
+
+    encoded_salt = base64.b64encode(salt).decode("ascii")
+    encoded_hash = base64.b64encode(password_hash).decode("ascii")
+
+    return (
+        f"pbkdf2_sha256"
+        f"${PASSWORD_ITERATIONS}"
+        f"${encoded_salt}"
+        f"${encoded_hash}"
+    )
+
+
+def verify_password(
+    password: str,
+    stored_password: str,
+) -> bool:
+    try:
+        algorithm, iterations, encoded_salt, encoded_hash = (
+            stored_password.split("$", 3)
+        )
+
+        if algorithm != "pbkdf2_sha256":
+            return False
+
+        salt = base64.b64decode(encoded_salt)
+        expected_hash = base64.b64decode(encoded_hash)
+
+        actual_hash = hashlib.pbkdf2_hmac(
+            "sha256",
+            password.encode("utf-8"),
+            salt,
+            int(iterations),
+        )
+
+        return hmac.compare_digest(
+            actual_hash,
+            expected_hash,
+        )
+
+    except (ValueError, TypeError):
+        return False
+
+
+def create_access_token(
+    user_id: int,
+    name: str,
+    email: str,
+) -> str:
+    if not JWT_SECRET:
+        raise RuntimeError("JWT_SECRET 尚未設定")
+
+    issued_at = datetime.now(timezone.utc)
+    expires_at = issued_at + timedelta(
+        days=JWT_EXPIRATION_DAYS
+    )
+
+    payload = {
+        "id": user_id,
+        "name": name,
+        "email": email,
+        "iat": issued_at,
+        "exp": expires_at,
+    }
+
+    return jwt.encode(
+        payload,
+        JWT_SECRET,
+        algorithm=JWT_ALGORITHM,
+    )
+
+
+def decode_access_token(
+    token: str,
+) -> dict[str, Any] | None:
+    if not JWT_SECRET:
+        raise RuntimeError("JWT_SECRET 尚未設定")
+
+    try:
+        payload = jwt.decode(
+            token,
+            JWT_SECRET,
+            algorithms=[JWT_ALGORITHM],
+            options={
+                "require": [
+                    "id",
+                    "name",
+                    "email",
+                    "iat",
+                    "exp",
+                ],
+            },
+        )
+
+        if (
+            not isinstance(payload.get("id"), int)
+            or not isinstance(payload.get("name"), str)
+            or not isinstance(payload.get("email"), str)
+        ):
+            return None
+
+        return payload
+
+    except jwt.PyJWTError:
+        return None
 
 
 @app.exception_handler(RequestValidationError)
@@ -20,6 +164,18 @@ async def handle_request_validation_error(
             content={
                 "error": True,
                 "message": "景點編號不正確",
+            },
+        )
+
+    if request.url.path in {
+        "/api/user",
+        "/api/user/auth",
+    }:
+        return JSONResponse(
+            status_code=400,
+            content={
+                "error": True,
+                "message": "輸入資料不正確",
             },
         )
 
@@ -445,3 +601,231 @@ async def get_mrts():
             and connection.is_connected()
         ):
             connection.close()
+
+
+@app.post("/api/user")
+async def sign_up_user(user: UserSignUpInput):
+    connection = None
+    cursor = None
+
+    name = user.name.strip()
+    email = str(user.email).strip().lower()
+    password = user.password
+
+    if not name or not password:
+        return JSONResponse(
+            status_code=400,
+            content={
+                "error": True,
+                "message": "姓名、電子信箱和密碼不可為空",
+            },
+        )
+
+    try:
+        connection = get_connection()
+        cursor = connection.cursor()
+
+        password_hash = hash_password(password)
+
+        cursor.execute(
+            """
+            INSERT INTO users (
+                name,
+                email,
+                password
+            )
+            VALUES (%s, %s, %s)
+            """,
+            (
+                name,
+                email,
+                password_hash,
+            ),
+        )
+
+        connection.commit()
+
+        return {
+            "ok": True,
+        }
+
+    except IntegrityError:
+        if connection is not None:
+            connection.rollback()
+
+        return JSONResponse(
+            status_code=400,
+            content={
+                "error": True,
+                "message": "此電子信箱已經註冊",
+            },
+        )
+
+    except Exception as error:
+        if connection is not None:
+            connection.rollback()
+
+        print(
+            "POST /api/user failed:",
+            error,
+        )
+
+        return JSONResponse(
+            status_code=500,
+            content={
+                "error": True,
+                "message": "伺服器內部錯誤",
+            },
+        )
+
+    finally:
+        if cursor is not None:
+            cursor.close()
+
+        if (
+            connection is not None
+            and connection.is_connected()
+        ):
+            connection.close()
+
+
+@app.put("/api/user/auth")
+async def sign_in_user(user: UserSignInInput):
+    connection = None
+    cursor = None
+
+    email = str(user.email).strip().lower()
+    password = user.password
+
+    if not password:
+        return JSONResponse(
+            status_code=400,
+            content={
+                "error": True,
+                "message": "電子信箱和密碼不可為空",
+            },
+        )
+
+    try:
+        connection = get_connection()
+        cursor = connection.cursor(dictionary=True)
+
+        cursor.execute(
+            """
+            SELECT
+                id,
+                name,
+                email,
+                password
+            FROM users
+            WHERE email = %s
+            """,
+            (email,),
+        )
+
+        row = cast(
+            dict[str, Any] | None,
+            cursor.fetchone(),
+        )
+
+        if (
+            row is None
+            or not verify_password(
+                password,
+                row["password"],
+            )
+        ):
+            return JSONResponse(
+                status_code=400,
+                content={
+                    "error": True,
+                    "message": "電子信箱或密碼錯誤",
+                },
+            )
+
+        token = create_access_token(
+            user_id=row["id"],
+            name=row["name"],
+            email=row["email"],
+        )
+
+        return {
+            "token": token,
+        }
+
+    except Exception as error:
+        print(
+            "PUT /api/user/auth failed:",
+            error,
+        )
+
+        return JSONResponse(
+            status_code=500,
+            content={
+                "error": True,
+                "message": "伺服器內部錯誤",
+            },
+        )
+
+    finally:
+        if cursor is not None:
+            cursor.close()
+
+        if (
+            connection is not None
+            and connection.is_connected()
+        ):
+            connection.close()
+
+
+@app.get("/api/user/auth")
+async def get_current_user(request: Request):
+    authorization = request.headers.get(
+        "Authorization"
+    )
+
+    if not authorization:
+        return {
+            "data": None,
+        }
+
+    scheme, separator, token = authorization.partition(" ")
+
+    if (
+        scheme.lower() != "bearer"
+        or not separator
+        or not token
+    ):
+        return {
+            "data": None,
+        }
+
+    try:
+        payload = decode_access_token(token)
+
+        if payload is None:
+            return {
+                "data": None,
+            }
+
+        return {
+            "data": {
+                "id": payload["id"],
+                "name": payload["name"],
+                "email": payload["email"],
+            },
+        }
+
+    except Exception as error:
+        print(
+            "GET /api/user/auth failed:",
+            error,
+        )
+
+        return JSONResponse(
+            status_code=500,
+            content={
+                "error": True,
+                "message": "伺服器內部錯誤",
+            },
+        )
