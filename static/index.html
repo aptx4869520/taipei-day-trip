@@ -6,6 +6,9 @@
   <title>台北一日遊</title>
   <link rel="icon" href="data:,">
   <link rel="stylesheet" href="/static/css/index.css">
+  <link rel="stylesheet" href="/static/css/navigation.css">
+  <link rel="stylesheet" href="/static/css/auth-dialog.css">
+
 </head>
 <body>
   <header class="navigation">
@@ -13,7 +16,7 @@
       <a class="navigation__logo" href="/">台北一日遊</a>
       <nav class="navigation__actions" aria-label="會員功能">
         <button type="button">預定行程</button>
-        <button type="button">登入/註冊</button>
+        <button type="button" data-auth-trigger>登入/註冊</button>
       </nav>
     </div>
   </header>
@@ -79,6 +82,8 @@
   </main>
 
   <footer class="footer">COPYRIGHT © 2021 台北一日遊</footer>
+
+  <script src="/static/js/auth-dialog.js"></script>
   <script src="/static/js/index.js"></script>
 </body>
 </html>
