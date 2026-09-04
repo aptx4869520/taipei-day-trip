@@ -18,7 +18,7 @@
       <a class="navigation__logo" href="/">台北一日遊</a>
 
       <nav class="navigation__actions" aria-label="會員功能">
-        <button type="button">預定行程</button>
+        <button type="button" data-booking-trigger>預定行程</button>
         <button type="button" data-auth-trigger>登入/註冊</button>
       </nav>
     </div>
@@ -60,7 +60,7 @@
 
           <div class="booking__field booking__field--date">
             <label class="booking__label" for="booking-date">選擇日期： </label>
-            <input id="booking-date" type="date" class="booking__date">
+            <input id="booking-date" type="date" class="booking__date" required>
           </div>
 
           <div class="booking__field booking__field--time">

@@ -6,6 +6,7 @@
   <title>台北一日遊</title>
   <link rel="icon" href="data:,">
   <link rel="stylesheet" href="/static/css/navigation.css">
+  <link rel="stylesheet" href="/static/css/booking.css">
   <link rel="stylesheet" href="/static/css/auth-dialog.css">
 </head>
 <body>
@@ -14,14 +15,172 @@
       <a class="navigation__logo" href="/">台北一日遊</a>
 
       <nav class="navigation__actions" aria-label="會員功能">
-        <button type="button">預定行程</button>
+        <button type="button" data-booking-trigger>預定行程</button>
         <button type="button" data-auth-trigger>登入/註冊</button>
       </nav>
     </div>
   </header>
 
-  <main></main>
+  <main class="booking-page">
+    <section class="booking-content">
+      <h1 id="booking-headline" class="booking-headline" hidden>
+        您好，<span id="booking-user-name">Yakko</span>，待預訂的行程如下：
+      </h1>
 
-  <script src="/static/js/auth-dialog.js"></script>
+      <p id="booking-empty" class="booking-empty" hidden>
+        目前沒有任何待預定的行程
+      </p>
+
+      <div id="booking-details" hidden>
+        <section class="booking-trip">
+          <div class="booking-trip__picture">
+            <img
+              id="booking-attraction-image"
+              src="https://padax.github.io/taipei-day-trip-resources/imgs/10-0.jpg"
+              alt="平安鐘"
+            >
+          </div>
+
+          <div class="booking-trip__information">
+            <h2 class="booking-trip__title">
+              台北一日遊：<span id="booking-attraction-name">平安鐘</span>
+            </h2>
+
+            <dl class="booking-trip__fields">
+              <div class="booking-trip__field">
+                <dt>日期：</dt>
+                <dd id="booking-date">2026-09-03</dd>
+              </div>
+
+              <div class="booking-trip__field">
+                <dt>時間：</dt>
+                <dd id="booking-time">下午 2 點到晚上 9 點</dd>
+              </div>
+
+              <div class="booking-trip__field">
+                <dt>費用：</dt>
+                <dd>
+                  新台幣
+                  <span id="booking-price">2500</span>
+                  元
+                </dd>
+              </div>
+
+              <div class="booking-trip__field">
+                <dt>地點：</dt>
+                <dd id="booking-address">
+                  臺北市大安區忠孝東路4段
+                </dd>
+              </div>
+            </dl>
+          </div>
+
+        <button
+          id="booking-delete"
+          class="booking-trip__delete"
+          type="button"
+          aria-label="刪除預訂行程"
+        >
+          <span aria-hidden="true"></span>
+        </button>
+      </section>
+
+      <hr class="booking-separator">
+
+      <section class="booking-form">
+        <h2 class="booking-form__title">您的聯絡資訊</h2>
+
+        <label class="booking-form__field">
+          <span>聯絡姓名：</span>
+          <input
+            id="contact-name"
+            type="text"
+            autocomplete="name"
+          >
+        </label>
+
+        <label class="booking-form__field">
+          <span>連絡信箱：</span>
+          <input
+            id="contact-email"
+            type="email"
+            autocomplete="email"
+          >
+        </label>
+
+        <label class="booking-form__field">
+          <span>手機號碼：</span>
+          <input
+            id="contact-phone"
+            type="tel"
+            autocomplete="tel"
+          >
+        </label>
+
+        <p class="booking-form__notice">
+          請保持手機暢通，準時到達，導覽人員將用手機與您聯繫，務必留下正確的聯絡方式。
+        </p>
+      </section>
+
+      <hr class="booking-separator">
+
+      <section class="booking-form booking-payment">
+        <h2 class="booking-form__title">信用卡付款資訊</h2>
+
+        <label class="booking-form__field">
+          <span>卡片號碼：</span>
+          <input
+            type="text"
+            inputmode="numeric"
+            autocomplete="cc-number"
+          >
+        </label>
+
+        <label class="booking-form__field">
+          <span>過期時間：</span>
+          <input
+            type="text"
+            inputmode="numeric"
+            autocomplete="cc-exp"
+          >
+        </label>
+
+        <label class="booking-form__field">
+          <span>驗證密碼：</span>
+          <input
+            type="text"
+            inputmode="numeric"
+            autocomplete="cc-csc"
+          >
+        </label>
+      </section>
+
+      <hr class="booking-separator">
+
+      <section class="booking-confirm">
+        <p class="booking-confirm__price">
+          總價：新台幣
+          <span id="booking-total-price">2500</span>
+          元
+        </p>
+
+        <button
+          class="booking-confirm__button"
+          type="button"
+        >
+          確認訂購並付款
+        </button>
+      </section>
+    </div>
+  </section>
+</main>
+
+<footer class="booking-footer">
+  COPYRIGHT © 2021 台北一日遊
+</footer>
+
+<script src="/static/js/auth-dialog.js"></script>
+<script src="/static/js/booking.js"></script>
+
 </body>
 </html>

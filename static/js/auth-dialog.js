@@ -2,6 +2,10 @@ const authTriggers = document.querySelectorAll(
   "[data-auth-trigger]"
 );
 
+const bookingTriggers = document.querySelectorAll(
+  "[data-booking-trigger]"
+);
+
 if (authTriggers.length > 0) {
   const overlay = document.createElement("div");
 
@@ -266,6 +270,19 @@ async function checkSignInStatus() {
       if (isSignedIn) {
         localStorage.removeItem("token");
         window.location.reload();
+        return;
+      }
+
+      openDialog();
+    });
+  });
+
+  bookingTriggers.forEach((trigger) => {
+    trigger.addEventListener("click", async () => {
+      await checkSignInStatus();
+
+      if (isSignedIn) {
+        window.location.href = "/booking";
         return;
       }
 
