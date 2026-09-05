@@ -3,8 +3,8 @@ import hashlib
 import hmac
 import os
 import secrets
-from datetime import datetime, timedelta, timezone
-from typing import Any, cast
+from datetime import date, datetime, timedelta, timezone
+from typing import Any, Literal, cast
 
 import jwt
 from fastapi import FastAPI, Query, Request
@@ -36,6 +36,13 @@ class UserSignUpInput(BaseModel):
 class UserSignInInput(BaseModel):
     email: EmailStr
     password: str
+
+
+class BookingInput(BaseModel):
+    attractionId: int
+    date: date
+    time: Literal["morning", "afternoon"]
+    price: Literal[2000, 2500]
 
 
 def hash_password(password: str) -> str:
@@ -153,6 +160,38 @@ def decode_access_token(
         return None
 
 
+def get_authenticated_user_id(
+    request: Request,
+) -> int | None:
+    authorization = request.headers.get(
+        "Authorization"
+    )
+
+    if not authorization:
+        return None
+
+    scheme, separator, token = authorization.partition(" ")
+
+    if (
+        scheme.lower() != "bearer"
+        or not separator
+        or not token
+    ):
+        return None
+
+    payload = decode_access_token(token)
+
+    if payload is None:
+        return None
+
+    user_id = payload.get("id")
+
+    if not isinstance(user_id, int):
+        return None
+
+    return user_id
+
+
 @app.exception_handler(RequestValidationError)
 async def handle_request_validation_error(
     request: Request,
@@ -170,6 +209,7 @@ async def handle_request_validation_error(
     if request.url.path in {
         "/api/user",
         "/api/user/auth",
+        "/api/booking",
     }:
         return JSONResponse(
             status_code=400,
@@ -829,3 +869,262 @@ async def get_current_user(request: Request):
                 "message": "伺服器內部錯誤",
             },
         )
+
+
+@app.post("/api/booking")
+async def create_booking(
+    request: Request,
+    booking_data: BookingInput,
+):
+    connection = None
+    cursor = None
+
+    try:
+        user_id = get_authenticated_user_id(request)
+
+        if user_id is None:
+            return JSONResponse(
+                status_code=403,
+                content={
+                    "error": True,
+                    "message": "未登入系統，拒絕存取",
+                },
+            )
+
+        connection = get_connection()
+        cursor = connection.cursor(dictionary=True)
+
+        cursor.execute(
+            """
+            SELECT id
+            FROM attractions
+            WHERE id = %s
+            """,
+            (booking_data.attractionId,),
+        )
+
+        attraction = cursor.fetchone()
+
+        if attraction is None:
+            return JSONResponse(
+                status_code=400,
+                content={
+                    "error": True,
+                    "message": "景點編號不正確",
+                },
+            )
+
+        cursor.execute(
+            """
+            INSERT INTO bookings (
+                user_id,
+                attraction_id,
+                date,
+                time,
+                price
+            )
+            VALUES (%s, %s, %s, %s, %s)
+            ON DUPLICATE KEY UPDATE
+                attraction_id = VALUES(attraction_id),
+                date = VALUES(date),
+                time = VALUES(time),
+                price = VALUES(price)
+            """,
+            (
+                user_id,
+                booking_data.attractionId,
+                booking_data.date,
+                booking_data.time,
+                booking_data.price,
+            ),
+        )
+
+        connection.commit()
+
+        return {
+            "ok": True,
+        }
+
+    except Exception as error:
+        if connection is not None:
+            connection.rollback()
+
+        print(
+            "POST /api/booking failed:",
+            error,
+        )
+
+        return JSONResponse(
+            status_code=500,
+            content={
+                "error": True,
+                "message": "伺服器內部錯誤",
+            },
+        )
+
+    finally:
+        if cursor is not None:
+            cursor.close()
+
+        if (
+            connection is not None
+            and connection.is_connected()
+        ):
+            connection.close()
+
+
+@app.get("/api/booking")
+async def get_booking(request: Request):
+    connection = None
+    cursor = None
+
+    try:
+        user_id = get_authenticated_user_id(request)
+
+        if user_id is None:
+            return JSONResponse(
+                status_code=403,
+                content={
+                    "error": True,
+                    "message": "未登入系統，拒絕存取",
+                },
+            )
+
+        connection = get_connection()
+        cursor = connection.cursor(dictionary=True)
+
+        cursor.execute(
+            """
+            SELECT
+                bookings.date,
+                bookings.time,
+                bookings.price,
+                attractions.id AS attraction_id,
+                attractions.name AS attraction_name,
+                attractions.address AS attraction_address,
+                (
+                    SELECT attraction_images.image_url
+                    FROM attraction_images
+                    WHERE
+                        attraction_images.attraction_id
+                        = attractions.id
+                    ORDER BY attraction_images.image_order
+                    LIMIT 1
+                ) AS attraction_image
+            FROM bookings
+            INNER JOIN attractions
+                ON attractions.id = bookings.attraction_id
+            WHERE bookings.user_id = %s
+            """,
+            (user_id,),
+        )
+
+        row = cast(
+            dict[str, Any] | None,
+            cursor.fetchone(),
+        )
+
+        if row is None:
+            return {
+                "data": None,
+            }
+
+        return {
+            "data": {
+                "attraction": {
+                    "id": row["attraction_id"],
+                    "name": row["attraction_name"],
+                    "address": row["attraction_address"],
+                    "image": row["attraction_image"],
+                },
+                "date": row["date"].isoformat(),
+                "time": row["time"],
+                "price": row["price"],
+            },
+        }
+
+    except Exception as error:
+        print(
+            "GET /api/booking failed:",
+            error,
+        )
+
+        return JSONResponse(
+            status_code=500,
+            content={
+                "error": True,
+                "message": "伺服器內部錯誤",
+            },
+        )
+
+    finally:
+        if cursor is not None:
+            cursor.close()
+
+        if (
+            connection is not None
+            and connection.is_connected()
+        ):
+            connection.close()
+
+
+@app.delete("/api/booking")
+async def delete_booking(request: Request):
+    connection = None
+    cursor = None
+
+    try:
+        user_id = get_authenticated_user_id(request)
+
+        if user_id is None:
+            return JSONResponse(
+                status_code=403,
+                content={
+                    "error": True,
+                    "message": "未登入系統，拒絕存取",
+                },
+            )
+
+        connection = get_connection()
+        cursor = connection.cursor()
+
+        cursor.execute(
+            """
+            DELETE FROM bookings
+            WHERE user_id = %s
+            """,
+            (user_id,),
+        )
+
+        connection.commit()
+
+        return {
+            "ok": True,
+        }
+
+    except Exception as error:
+        if connection is not None:
+            connection.rollback()
+
+        print(
+            "DELETE /api/booking failed:",
+            error,
+        )
+
+        return JSONResponse(
+            status_code=500,
+            content={
+                "error": True,
+                "message": "伺服器內部錯誤",
+            },
+        )
+
+    finally:
+        if cursor is not None:
+            cursor.close()
+
+        if (
+            connection is not None
+            and connection.is_connected()
+        ):
+            connection.close()

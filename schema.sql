@@ -42,3 +42,28 @@ CREATE TABLE IF NOT EXISTS users (
 ) ENGINE=InnoDB
 DEFAULT CHARSET=utf8mb4
 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS bookings (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    user_id BIGINT NOT NULL,
+    attraction_id INT NOT NULL,
+    date DATE NOT NULL,
+    time VARCHAR(20) NOT NULL,
+    price INT NOT NULL,
+
+    CONSTRAINT uq_bookings_user
+        UNIQUE (user_id),
+
+    CONSTRAINT fk_bookings_user
+        FOREIGN KEY (user_id)
+        REFERENCES users (id)
+        ON DELETE CASCADE,
+
+    CONSTRAINT fk_bookings_attraction
+        FOREIGN KEY (attraction_id)
+        REFERENCES attractions (id),
+
+    INDEX idx_bookings_attraction (attraction_id)
+) ENGINE=InnoDB
+DEFAULT CHARSET=utf8mb4
+COLLATE=utf8mb4_unicode_ci;

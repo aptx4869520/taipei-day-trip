@@ -18,6 +18,9 @@ const pageElements = {
   previousButton: document.querySelector(".slideshow__arrow--left"),
   nextButton: document.querySelector(".slideshow__arrow--right"),
   price: document.querySelector("#booking-price"),
+  date: document.querySelector("#booking-date"),
+  bookingButton: document.querySelector(".booking__button"),
+  authTrigger: document.querySelector("[data-auth-trigger]"),
 };
 
 const timeInputs = document.querySelectorAll('input[name="time"]');
@@ -135,6 +138,21 @@ function updatePrice(time) {
   }
 }
 
+function initializeBookingDate() {
+  const today = new Date();
+  const timezoneOffset = today.getTimezoneOffset()
+    * 60
+    * 1000;
+
+  const localDate = new Date(
+    today.getTime() - timezoneOffset
+  );
+
+  pageElements.date.min = localDate
+    .toISOString()
+    .split("T")[0];
+}
+
 function initializeBookingTime() {
   const selectedTime = document.querySelector('input[name="time"]:checked');
 
@@ -147,6 +165,72 @@ function initializeBookingTime() {
   });
 }
 
+async function createBooking() {
+  const token = localStorage.getItem("token");
+
+  if (!token) {
+    pageElements.authTrigger.click();
+    return;
+  }
+
+  if (!pageElements.date.value) {
+    pageElements.date.reportValidity();
+    return;
+  }
+
+  const selectedTime = document.querySelector(
+    'input[name="time"]:checked'
+  );
+
+  if (!selectedTime) {
+    return;
+  }
+
+  const time = selectedTime.value;
+  const price = TOUR_PRICES[time];
+
+  pageElements.bookingButton.disabled = true;
+
+  try {
+    const response = await fetch("/api/booking", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`
+      },
+      body: JSON.stringify({
+        attractionId,
+        date: pageElements.date.value,
+        time,
+        price
+      })
+    });
+
+    const result = await response.json();
+
+    if (response.status === 403) {
+      localStorage.removeItem("token");
+      pageElements.authTrigger.click();
+      return;
+    }
+
+    if (!response.ok) {
+      throw new Error(
+        result.message || "建立預訂行程失敗"
+      );
+    }
+
+    window.location.href = "/booking";
+  } catch (error) {
+    console.error("建立預訂行程失敗：", error);
+    window.alert(
+      error.message || "建立預訂行程失敗"
+    );
+  } finally {
+    pageElements.bookingButton.disabled = false;
+  }
+}
+
 function showPageError(message) {
   pageElements.section.hidden = true;
   pageElements.separator.hidden = true;
@@ -156,8 +240,19 @@ function showPageError(message) {
 }
 
 async function initializeAttractionPage() {
+  initializeBookingDate();
   initializeBookingTime();
-  pageElements.previousButton.addEventListener("click", showPreviousImage);
+
+  pageElements.bookingButton.addEventListener(
+    "click",
+    createBooking
+  );
+
+  pageElements.previousButton.addEventListener(
+    "click",
+    showPreviousImage
+  );
+
   pageElements.nextButton.addEventListener("click", showNextImage);
 
   if (!Number.isInteger(attractionId) || attractionId < 1) {
