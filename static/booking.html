@@ -94,6 +94,7 @@
           <span>聯絡姓名：</span>
           <input
             id="contact-name"
+            required maxlength="40"
             type="text"
             autocomplete="name"
           >
@@ -103,6 +104,7 @@
           <span>連絡信箱：</span>
           <input
             id="contact-email"
+            required maxlength="40"
             type="email"
             autocomplete="email"
           >
@@ -112,6 +114,7 @@
           <span>手機號碼：</span>
           <input
             id="contact-phone"
+            required maxlength="16"
             type="tel"
             autocomplete="tel"
           >
@@ -127,32 +130,22 @@
       <section class="booking-form booking-payment">
         <h2 class="booking-form__title">信用卡付款資訊</h2>
 
-        <label class="booking-form__field">
-          <span>卡片號碼：</span>
-          <input
-            type="text"
-            inputmode="numeric"
-            autocomplete="cc-number"
-          >
-        </label>
+        <div class="booking-form__field">
+          <span id="card-number-label">卡片號碼：</span>
+          <div id="card-number" class="tpfield" role="group" aria-labelledby="card-number-label"></div>
+        </div>
 
-        <label class="booking-form__field">
-          <span>過期時間：</span>
-          <input
-            type="text"
-            inputmode="numeric"
-            autocomplete="cc-exp"
-          >
-        </label>
+        <div class="booking-form__field">
+          <span id="card-expiration-label">過期時間：</span>
+          <div id="card-expiration-date" class="tpfield" role="group" aria-labelledby="card-expiration-label"></div>
+        </div>
 
-        <label class="booking-form__field">
-          <span>驗證密碼：</span>
-          <input
-            type="text"
-            inputmode="numeric"
-            autocomplete="cc-csc"
-          >
-        </label>
+        <div class="booking-form__field">
+          <span id="card-ccv-label">驗證密碼：</span>
+          <div id="card-ccv" class="tpfield" role="group" aria-labelledby="card-ccv-label"></div>
+        </div>
+
+        <p id="payment-message" class="booking-payment__message" role="status" aria-live="polite"></p>
       </section>
 
       <hr class="booking-separator">
@@ -165,8 +158,10 @@
         </p>
 
         <button
+          id="booking-confirm"
           class="booking-confirm__button"
           type="button"
+          disabled
         >
           確認訂購並付款
         </button>
@@ -180,6 +175,7 @@
 </footer>
 
 <script src="/static/js/auth-dialog.js"></script>
+<script src="https://js.tappaysdk.com/sdk/tpdirect/v5.14.0"></script>
 <script src="/static/js/booking.js"></script>
 
 </body>

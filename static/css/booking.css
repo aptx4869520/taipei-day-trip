@@ -213,7 +213,8 @@ button {
   flex: 0 0 81px;
 }
 
-.booking-form__field input {
+.booking-form__field input,
+.booking-form__field .tpfield {
   width: 200px;
   height: 38px;
   padding: 8px 10px;
@@ -228,7 +229,8 @@ button {
   line-height: 20px;
 }
 
-.booking-form__field input:focus {
+.booking-form__field input:focus,
+.booking-form__field .tappay-field-focus {
   border-color: var(--primary);
 }
 
@@ -367,4 +369,19 @@ body.booking-empty-state .booking-footer {
   .booking-footer {
     height: 104px;
   }
+}
+
+.booking-payment__message {
+  margin: 15px 0 0;
+  font-size: 16px;
+  line-height: 24px;
+}
+
+.booking-payment__message:empty {
+  display: none;
+}
+
+.booking-confirm__button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
