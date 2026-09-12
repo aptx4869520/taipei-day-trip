@@ -1,10 +1,13 @@
 import base64
 import hashlib
 import hmac
+import json
 import os
 import secrets
 from datetime import date, datetime, timedelta, timezone
 from typing import Any, Literal, cast
+from urllib.error import URLError
+from urllib.request import Request as URLRequest, urlopen
 
 import jwt
 from fastapi import FastAPI, Query, Request
@@ -13,7 +16,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from mysql.connector import IntegrityError
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, Field
 
 from database import get_connection
 
@@ -210,6 +213,7 @@ async def handle_request_validation_error(
         "/api/user",
         "/api/user/auth",
         "/api/booking",
+        "/api/orders",
     }:
         return JSONResponse(
             status_code=400,
@@ -239,7 +243,7 @@ async def booking(request: Request):
 	return FileResponse("./static/booking.html", media_type="text/html")
 @app.get("/thankyou", include_in_schema=False)
 async def thankyou(request: Request):
-	return FileResponse("./static/thankyou.html", media_type="text/html"	)
+	return FileResponse("./static/thankyou.html", media_type="text/html")
 
 # ------------------------------
 
@@ -1127,4 +1131,229 @@ async def delete_booking(request: Request):
             connection is not None
             and connection.is_connected()
         ):
+            connection.close()
+
+
+class OrderAttractionInput(BaseModel):
+    id: int
+    name: str
+    address: str
+    image: str
+
+
+class OrderTripInput(BaseModel):
+    attraction: OrderAttractionInput
+    date: date
+    time: Literal["morning", "afternoon"]
+
+
+class OrderContactInput(BaseModel):
+    name: str = Field(min_length=1, max_length=40)
+    email: EmailStr = Field(max_length=40)
+    phone: str = Field(min_length=1, max_length=16)
+
+
+class OrderInput(BaseModel):
+    price: Literal[2000, 2500]
+    trip: OrderTripInput
+    contact: OrderContactInput
+
+
+class CreateOrderInput(BaseModel):
+    prime: str = Field(min_length=1, max_length=100)
+    order: OrderInput
+
+
+def order_error(status_code: int, message: str):
+    return JSONResponse(
+        status_code=status_code,
+        content={"error": True, "message": message},
+    )
+
+
+def pay_by_prime(prime, number, price, contact, partner_key, merchant_id):
+    """只向 Sandbox 送出一次付款請求；不記錄 Prime 或金鑰。"""
+    payload = {
+        "prime": prime,
+        "partner_key": partner_key,
+        "merchant_id": merchant_id,
+        "amount": price,
+        "currency": "TWD",
+        "order_number": number,
+        "details": "台北一日遊",
+        "cardholder": {
+            "name": contact.name.strip(),
+            "email": str(contact.email),
+            "phone_number": contact.phone.strip(),
+        },
+        "remember": False,
+    }
+    payment_request = URLRequest(
+        "https://sandbox.tappaysdk.com/tpc/payment/pay-by-prime",
+        data=json.dumps(payload).encode("utf-8"),
+        headers={"Content-Type": "application/json", "x-api-key": partner_key},
+        method="POST",
+    )
+    try:
+        with urlopen(payment_request, timeout=30) as response:
+            result = json.load(response)
+        if not isinstance(result, dict) or type(result.get("status")) is not int:
+            raise ValueError("Invalid payment response")
+        status = result["status"]
+        trade_id = result.get("rec_trade_id")
+        return {
+            "status": status,
+            "message": "付款成功" if status == 0 else "付款失敗",
+            "rec_trade_id": trade_id[:64] if isinstance(trade_id, str) else None,
+        }
+    except (URLError, TimeoutError, OSError, ValueError):
+        # 逾時不代表未扣款；保留訂單與嘗試紀錄，不能自動重送。
+        return {
+            "status": -1,
+            "message": "付款結果尚未確認，請勿重複付款，請聯繫客服查詢",
+            "rec_trade_id": None,
+        }
+
+
+@app.post("/api/orders")
+def create_order(request: Request, order_data: CreateOrderInput):
+    user_id = get_authenticated_user_id(request)
+    if user_id is None:
+        return order_error(403, "未登入系統，拒絕存取")
+
+    partner_key = os.getenv("TAPPAY_PARTNER_KEY", "").strip()
+    merchant_id = os.getenv("TAPPAY_MERCHANT_ID", "").strip()
+    if not partner_key or not merchant_id:
+        return order_error(500, "付款服務尚未設定完成")
+
+    order = order_data.order
+    price = 2000 if order.trip.time == "morning" else 2500
+    if (order.price != price or not order_data.prime.strip()
+            or not order.contact.name.strip() or not order.contact.phone.strip()):
+        return order_error(400, "訂單資料不正確")
+
+    connection = None
+    cursor = None
+    number = None
+    try:
+        connection = get_connection()
+        cursor = connection.cursor(dictionary=True)
+        cursor.execute(
+            "SELECT attraction_id, date, time, price FROM bookings WHERE user_id = %s",
+            (user_id,),
+        )
+        booking = cursor.fetchone()
+        if booking is None or (
+            booking["attraction_id"] != order.trip.attraction.id
+            or booking["date"] != order.trip.date
+            or booking["time"] != order.trip.time
+            or booking["price"] != price
+        ):
+            return order_error(400, "預訂行程已變更或不存在，請重新載入頁面")
+        cursor.execute(
+            """
+            SELECT attractions.id, attractions.name, attractions.address,
+                (SELECT image_url FROM attraction_images
+                 WHERE attraction_id = attractions.id
+                 ORDER BY image_order LIMIT 1) AS image
+            FROM attractions WHERE attractions.id = %s
+            """,
+            (order.trip.attraction.id,),
+        )
+        attraction = cursor.fetchone()
+        if attraction is None:
+            return order_error(400, "景點編號不正確")
+
+        number = datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S") + secrets.token_hex(8)
+        cursor.execute(
+            """
+            INSERT INTO orders (number, user_id, attraction_id, attraction_name,
+                attraction_address, attraction_image, trip_date, trip_time,
+                price, contact_name, contact_email, contact_phone, status)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 'UNPAID')
+            """,
+            (number, user_id, attraction["id"], attraction["name"],
+             attraction["address"], attraction["image"], order.trip.date,
+             order.trip.time, price, order.contact.name.strip(),
+             str(order.contact.email), order.contact.phone.strip()),
+        )
+        cursor.execute(
+            "INSERT INTO payments (order_number, message) VALUES (%s, %s)",
+            (number, "付款處理中，結果尚未確認"),
+        )
+        
+        connection.commit()
+
+        payment = pay_by_prime(
+            order_data.prime, number, price, order.contact, partner_key, merchant_id,
+        )
+        cursor.execute(
+            """
+            UPDATE payments SET status = %s, message = %s, rec_trade_id = %s
+            WHERE order_number = %s
+            """,
+            (payment["status"], payment["message"], payment["rec_trade_id"], number),
+        )
+        if payment["status"] == 0:
+            cursor.execute("UPDATE orders SET status = 'PAID' WHERE number = %s", (number,),
+            )
+            cursor.execute("DELETE FROM bookings WHERE user_id = %s", (user_id,),
+            )
+
+        connection.commit()
+
+        return {"data": {"number": number, "payment": {
+            "status": payment["status"], "message": payment["message"],
+        }}}
+    except Exception:
+        if connection is not None:
+            connection.rollback()
+        
+        message = "訂單處理發生錯誤"
+        if number is not None:
+            message = f"訂單 {number} 處理異常，請勿重複付款，請聯繫客服查詢"
+        return order_error(500, message)
+    finally:
+        if cursor is not None:
+            cursor.close()
+        if connection is not None and connection.is_connected():
+            connection.close()
+
+
+@app.get("/api/order/{orderNumber}")
+def get_order(request: Request, orderNumber: str):
+    user_id = get_authenticated_user_id(request)
+    if user_id is None:
+        return order_error(403, "未登入系統，拒絕存取")
+    connection = None
+    cursor = None
+    try:
+        connection = get_connection()
+        cursor = connection.cursor(dictionary=True)
+        cursor.execute(
+            "SELECT * FROM orders WHERE number = %s AND user_id = %s",
+            (orderNumber, user_id),
+        )
+        row = cursor.fetchone()
+        if row is None:
+            return {"data": None}
+        return {"data": {
+            "number": row["number"], "price": row["price"],
+            "trip": {
+                "attraction": {"id": row["attraction_id"],
+                    "name": row["attraction_name"], "address": row["attraction_address"],
+                    "image": row["attraction_image"]},
+                "date": row["trip_date"].isoformat(), "time": row["trip_time"],
+            },
+            "contact": {"name": row["contact_name"], "email": row["contact_email"],
+                "phone": row["contact_phone"]},
+           
+            "status": 1 if row["status"] == "PAID" else 0,
+        }}
+    except Exception:
+        return order_error(500, "無法取得訂單資料")
+    finally:
+        if cursor is not None:
+            cursor.close()
+        if connection is not None and connection.is_connected():
             connection.close()

@@ -6,6 +6,7 @@
   <title>台北一日遊</title>
   <link rel="icon" href="data:,">
   <link rel="stylesheet" href="/static/css/navigation.css">
+  <link rel="stylesheet" href="/static/css/thankyou.css">
   <link rel="stylesheet" href="/static/css/auth-dialog.css">
 </head>
 <body>
@@ -14,14 +15,66 @@
       <a class="navigation__logo" href="/">台北一日遊</a>
 
       <nav class="navigation__actions" aria-label="會員功能">
-        <button type="button">預定行程</button>
+        <button type="button" data-booking-trigger>預定行程</button>
         <button type="button" data-auth-trigger>登入/註冊</button>
       </nav>
     </div>
   </header>
 
-  <main></main>
+  <main class="thankyou-page">
+    <section class="thankyou-card" aria-labelledby="thankyou-title">
+      <div id="success-icon" class="thankyou-status-icon thankyou-status-icon--success" hidden>
+        <svg viewBox="0 0 72 72" aria-hidden="true" focusable="false">
+          <circle cx="36" cy="36" r="32"></circle>
+          <path d="M21 37.5 31.5 48 52 27"></path>
+        </svg>
+      </div>
+
+      <div id="pending-icon" class="thankyou-status-icon thankyou-status-icon--pending" hidden>
+        <svg viewBox="0 0 72 72" aria-hidden="true" focusable="false">
+          <circle cx="36" cy="36" r="32"></circle>
+          <path d="M36 20v20"></path>
+          <circle cx="36" cy="51" r="2"></circle>
+        </svg>
+      </div>
+
+      <p class="thankyou-eyebrow">台北一日遊</p>
+      <h1 id="thankyou-title">正在確認訂單</h1>
+      <p id="thankyou-message" class="thankyou-message" role="status" aria-live="polite">
+        請稍候，我們正在確認您的付款結果。
+      </p>
+
+      <div id="order-card" class="order-card" hidden>
+        <div class="order-number-row">
+          <span class="order-number-label">訂單編號：</span>
+          <div class="order-number-value">
+            <code id="order-number"></code>
+            <button
+              id="copy-order-number"
+              class="copy-button"
+              type="button"
+              aria-label="複製訂單編號"
+              title="複製訂單編號"
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <rect x="8" y="9" width="10" height="10" rx="2"></rect>
+                <path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"></path>
+              </svg>
+            </button>
+          </div>
+        </div>
+        <p id="copy-feedback" class="copy-feedback" role="status" aria-live="polite"></p>
+      </div>
+
+      <a class="thankyou-home-link" href="/">返回首頁</a>
+    </section>
+  </main>
+
+  <footer class="thankyou-footer">
+    COPYRIGHT © 2021 台北一日遊
+  </footer>
 
   <script src="/static/js/auth-dialog.js"></script>
+  <script src="/static/js/thankyou.js"></script>
 </body>
 </html>
