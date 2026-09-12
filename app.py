@@ -243,7 +243,7 @@ async def booking(request: Request):
 	return FileResponse("./static/booking.html", media_type="text/html")
 @app.get("/thankyou", include_in_schema=False)
 async def thankyou(request: Request):
-	return FileResponse("./static/thankyou.html", media_type="text/html"	)
+	return FileResponse("./static/thankyou.html", media_type="text/html")
 
 # ------------------------------
 
@@ -1281,7 +1281,7 @@ def create_order(request: Request, order_data: CreateOrderInput):
             "INSERT INTO payments (order_number, message) VALUES (%s, %s)",
             (number, "付款處理中，結果尚未確認"),
         )
-        # 第一個交易：必須在呼叫金流前，確實保存 UNPAID 訂單。
+        
         connection.commit()
 
         payment = pay_by_prime(
@@ -1295,16 +1295,20 @@ def create_order(request: Request, order_data: CreateOrderInput):
             (payment["status"], payment["message"], payment["rec_trade_id"], number),
         )
         if payment["status"] == 0:
-            cursor.execute("UPDATE orders SET status = 'PAID' WHERE number = %s", (number,))
-        # 第二個交易：付款紀錄與訂單狀態一起保存。
+            cursor.execute("UPDATE orders SET status = 'PAID' WHERE number = %s", (number,),
+            )
+            cursor.execute("DELETE FROM bookings WHERE user_id = %s", (user_id,),
+            )
+
         connection.commit()
+
         return {"data": {"number": number, "payment": {
             "status": payment["status"], "message": payment["message"],
         }}}
     except Exception:
         if connection is not None:
             connection.rollback()
-        # 不輸出例外原文，以免包含付款或聯絡資料。
+        
         message = "訂單處理發生錯誤"
         if number is not None:
             message = f"訂單 {number} 處理異常，請勿重複付款，請聯繫客服查詢"
@@ -1343,7 +1347,7 @@ def get_order(request: Request, orderNumber: str):
             },
             "contact": {"name": row["contact_name"], "email": row["contact_email"],
                 "phone": row["contact_phone"]},
-            # API 使用數字；資料庫使用作業指定的文字狀態。
+           
             "status": 1 if row["status"] == "PAID" else 0,
         }}
     except Exception:
