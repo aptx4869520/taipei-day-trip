@@ -40,12 +40,14 @@
             <dd><output id="mcp-token">尚未產生金鑰</output></dd>
           </div>
         </dl>
-        <div class="member-notice">
-          <p>將 Host URL 與 Bearer Token 填入台北一日遊外掛的 MCP 設定。請求標頭使用 Authorization: Bearer 加上金鑰。</p>
-          <p>新金鑰只會在產生時顯示，請妥善保存。更新後舊金鑰立即失效。</p>
-        </div>
         <div class="token-actions">
-          <button id="generate-token" type="button">產生 / 更新金鑰</button>
+          <div class="token-action-primary">
+            <button id="generate-token" type="button" aria-describedby="token-help">產生 / 更新金鑰</button>
+            <div id="token-help" class="token-tooltip" role="tooltip">
+              <p>將 Host URL 與 Bearer Token 填入台北一日遊外掛的 MCP 設定。</p>
+              <p>新金鑰只會在產生時顯示，請妥善保存。更新後舊金鑰立即失效。</p>
+            </div>
+          </div>
           <p id="token-status" role="status"></p>
         </div>
       </section>

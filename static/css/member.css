@@ -112,25 +112,6 @@ body {
   font: inherit;
 }
 
-.member-notice {
-  margin: 0 32px 24px;
-  padding: 16px 18px;
-  border-left: 4px solid var(--member-accent);
-  border-radius: 0 10px 10px 0;
-  background: #fafafa;
-}
-
-.member-notice p {
-  margin: 0;
-  color: #666666;
-  font-size: 15px;
-  line-height: 1.75;
-}
-
-.member-notice p + p {
-  margin-top: 8px;
-}
-
 .token-actions {
   display: flex;
   align-items: center;
@@ -138,6 +119,53 @@ body {
   min-height: 85px;
   padding: 20px 32px 28px;
   border-top: 1px solid var(--member-line);
+}
+
+.token-action-primary {
+  position: relative;
+  flex: 0 0 auto;
+}
+
+.token-tooltip {
+  position: absolute;
+  z-index: 10;
+  bottom: calc(100% + 14px);
+  left: 0;
+  width: min(390px, calc(100vw - 64px));
+  padding: 14px 16px;
+  border-radius: 10px;
+  background: #3f4b4e;
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.2);
+  color: #ffffff;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(6px);
+  transition: opacity 0.18s ease, transform 0.18s ease;
+}
+
+.token-tooltip::after {
+  position: absolute;
+  top: 100%;
+  left: 28px;
+  border: 8px solid transparent;
+  border-top-color: #3f4b4e;
+  content: "";
+}
+
+.token-tooltip p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.65;
+}
+
+.token-tooltip p + p {
+  margin-top: 6px;
+}
+
+.token-action-primary:hover .token-tooltip,
+.token-action-primary:focus-within .token-tooltip {
+  opacity: 1;
+  transform: translateY(0);
 }
 
 .member-page button {
@@ -222,13 +250,30 @@ footer {
     grid-template-columns: 1fr;
   }
 
-  .member-notice {
-    margin-inline: 20px;
-  }
-
   .token-actions {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .token-action-primary,
+  #generate-token {
+    width: 100%;
+  }
+
+  .token-tooltip {
+    left: 50%;
+    width: min(390px, calc(100vw - 56px));
+    transform: translate(-50%, 6px);
+  }
+
+  .token-tooltip::after {
+    left: 50%;
+    transform: translateX(-50%);
+  }
+
+  .token-action-primary:hover .token-tooltip,
+  .token-action-primary:focus-within .token-tooltip {
+    transform: translate(-50%, 0);
   }
 
   .member-session {
