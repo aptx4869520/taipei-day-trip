@@ -131,7 +131,8 @@ body {
   z-index: 10;
   bottom: calc(100% + 14px);
   left: 0;
-  width: min(390px, calc(100vw - 64px));
+  width: max-content;
+  max-width: calc(100vw - 64px);
   padding: 14px 16px;
   border-radius: 10px;
   background: #3f4b4e;
@@ -152,13 +153,29 @@ body {
   content: "";
 }
 
-.token-tooltip p {
+.token-tooltip ul {
   margin: 0;
-  font-size: 14px;
-  line-height: 1.65;
+  padding: 0;
+  list-style: none;
 }
 
-.token-tooltip p + p {
+.token-tooltip li {
+  position: relative;
+  padding-left: 18px;
+  font-size: 14px;
+  line-height: 1.65;
+  white-space: nowrap;
+}
+
+.token-tooltip li::before {
+  position: absolute;
+  left: 0;
+  color: #9ed4df;
+  content: "•";
+  font-weight: 700;
+}
+
+.token-tooltip li + li {
   margin-top: 6px;
 }
 
@@ -262,7 +279,7 @@ footer {
 
   .token-tooltip {
     left: 50%;
-    width: min(390px, calc(100vw - 56px));
+    max-width: calc(100vw - 56px);
     transform: translate(-50%, 6px);
   }
 
@@ -282,5 +299,16 @@ footer {
 
   #member-signout {
     width: 100%;
+  }
+}
+
+@media (max-width: 560px) {
+  .token-tooltip {
+    width: calc(100vw - 40px);
+    max-width: none;
+  }
+
+  .token-tooltip li {
+    white-space: normal;
   }
 }
