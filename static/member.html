@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>會員中心｜台北一日遊</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="/static/css/navigation.css">
+  <link rel="stylesheet" href="/static/css/auth-dialog.css">
+  <link rel="stylesheet" href="/static/css/member.css">
+  <script src="/static/js/auth-dialog.js" defer></script>
+  <script src="/static/js/member.js" defer></script>
+</head>
+<body>
+  <header class="navigation"><div class="navigation__content">
+    <a class="navigation__logo" href="/">台北一日遊</a>
+    <nav class="navigation__actions" aria-label="會員功能">
+      <button type="button" data-booking-trigger>預定行程</button>
+      <a href="#" data-auth-trigger>登入/註冊</a>
+    </nav>
+  </div></header>
+  <main class="member-page">
+    <p id="member-status" role="status">正在確認登入狀態…</p>
+    <div id="member-content" hidden>
+      <h1>您好，<span id="member-name"></span>：</h1>
+      <section class="member-integration" aria-labelledby="integration-title">
+        <h2 id="integration-title">AI 工具整合</h2>
+        <p>MCP 伺服器設定：</p>
+        <dl><dt>Host URL</dt><dd id="mcp-host"></dd>
+          <dt>Bearer Token</dt><dd><output id="mcp-token">尚未產生金鑰</output></dd></dl>
+        <p>將 Host URL 與 Bearer Token 填入台北一日遊外掛的 MCP 設定。請求標頭使用 Authorization: Bearer 加上金鑰。</p>
+        <p>新金鑰只會在產生時顯示，請妥善保存。更新後舊金鑰立即失效。</p>
+        <button id="generate-token" type="button">產生 / 更新金鑰</button>
+        <p id="token-status" role="status"></p>
+      </section>
+      <button id="member-signout" type="button">登出會員</button>
+    </div>
+  </main>
+  <footer>COPYRIGHT © 2026 台北一日遊</footer>
+</body>
+</html>

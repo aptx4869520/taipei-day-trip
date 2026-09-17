@@ -48,7 +48,8 @@ body {
   align-items: center;
 }
 
-.navigation__actions button {
+.navigation__actions button,
+.navigation__actions a {
   height: 34px;
   padding: 10px;
   border: 0;
@@ -67,7 +68,13 @@ body {
     font-size: 27px;
   }
 
-  .navigation__actions button {
+  .navigation__actions button,
+  .navigation__actions a {
     padding-inline: 5px;
   }
+}
+
+.navigation__actions a {
+  box-sizing: border-box;
+  text-decoration: none;
 }
