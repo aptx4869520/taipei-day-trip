@@ -1,63 +1,91 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="zh-Hant">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>會員中心｜台北一日遊</title>
-  <link rel="icon" href="data:,">
-  <link rel="stylesheet" href="/static/css/navigation.css">
-  <link rel="stylesheet" href="/static/css/auth-dialog.css">
-  <link rel="stylesheet" href="/static/css/member.css">
-  <script src="/static/js/auth-dialog.js" defer></script>
-  <script src="/static/js/member.js" defer></script>
-</head>
-<body>
-  <header class="navigation"><div class="navigation__content">
-    <a class="navigation__logo" href="/">台北一日遊</a>
-    <nav class="navigation__actions" aria-label="會員功能">
-      <button type="button" data-booking-trigger>預定行程</button>
-      <a href="#" data-auth-trigger>登入/註冊</a>
-    </nav>
-  </div></header>
-  <main class="member-page">
-    <p id="member-status" class="member-loading" role="status">正在確認登入狀態…</p>
-    <div id="member-content" hidden>
-      <header class="member-heading">
-        <h1>您好，<span id="member-name"></span>：</h1>
-      </header>
-      <section class="member-integration" aria-labelledby="integration-title">
-        <div class="integration-heading">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>會員中心｜台北一日遊</title>
+    <link rel="icon" href="data:," />
+
+    <link rel="stylesheet" href="/static/css/navigation.css" />
+    <link rel="stylesheet" href="/static/css/auth-dialog.css" />
+    <link rel="stylesheet" href="/static/css/member.css" />
+
+    <script src="/static/js/auth-dialog.js" defer></script>
+    <script src="/static/js/member.js" defer></script>
+  </head>
+
+  <body>
+    <header class="navigation">
+      <div class="navigation__content">
+        <a class="navigation__logo" href="/">台北一日遊</a>
+
+        <nav class="navigation__actions" aria-label="會員功能">
+          <button type="button" data-booking-trigger>預定行程</button>
+          <a href="#" data-auth-trigger>登入/註冊</a>
+        </nav>
+      </div>
+    </header>
+
+    <main class="member-page">
+      <p id="member-status" class="member-loading" role="status">
+        正在確認登入狀態…
+      </p>
+
+      <div id="member-content" hidden>
+        <h1 class="member-heading">
+          您好，<span id="member-name"></span>：
+        </h1>
+
+        <section class="member-integration" aria-labelledby="integration-title">
           <h2 id="integration-title">AI 工具整合</h2>
           <p>MCP 伺服器設定：</p>
-        </div>
-        <dl class="mcp-settings">
-          <div class="mcp-setting">
-            <dt>Host URL</dt>
-            <dd id="mcp-host"></dd>
-          </div>
-          <div class="mcp-setting">
-            <dt>Bearer Token</dt>
-            <dd><output id="mcp-token">尚未產生金鑰</output></dd>
-          </div>
-        </dl>
-        <div class="token-actions">
-          <div class="token-action-primary">
-            <button id="generate-token" type="button" aria-describedby="token-help">產生 / 更新金鑰</button>
+
+          <dl class="mcp-settings">
+            <div class="mcp-setting">
+              <dt>Host URL</dt>
+              <dd id="mcp-host"></dd>
+            </div>
+
+            <div class="mcp-setting">
+              <dt>Bearer Token</dt>
+              <dd>
+                <output id="mcp-token">尚未產生金鑰</output>
+              </dd>
+            </div>
+          </dl>
+
+          <div class="token-actions">
+            <button
+              id="generate-token"
+              type="button"
+              aria-describedby="token-help"
+            >
+              產生 / 更新金鑰
+            </button>
+
             <div id="token-help" class="token-tooltip" role="tooltip">
               <ul>
-                <li>將 Host URL 與 Bearer Token 填入台北一日遊外掛的 MCP 設定。</li>
-                <li>新金鑰只會在產生時顯示，請妥善保存。更新後舊金鑰立即失效。</li>
+                <li>
+                  將 Host URL 與 Bearer Token 填入台北一日遊外掛的 MCP
+                  設定。
+                </li>
+                <li>
+                  新金鑰只會在產生時顯示，請妥善保存。更新後舊金鑰立即失效。
+                </li>
               </ul>
             </div>
+
+            <p id="token-status" role="status"></p>
           </div>
-          <p id="token-status" role="status"></p>
-        </div>
-      </section>
-      <div class="member-session">
-        <button id="member-signout" type="button">登出會員</button>
+        </section>
+
+        <button id="member-signout" class="member-signout" type="button">
+          登出會員
+        </button>
       </div>
-    </div>
-  </main>
-  <footer>COPYRIGHT © 2026 台北一日遊</footer>
-</body>
+    </main>
+
+    <footer>COPYRIGHT © 2026 台北一日遊</footer>
+  </body>
 </html>
