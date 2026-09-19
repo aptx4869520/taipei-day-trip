@@ -1,0 +1,21 @@
+{
+  "name": "taipei-day-trip",
+  "version": "0.1.0",
+  "description": "Search Taipei attractions and create a booking through the Taipei Day Trip MCP server.",
+  "author": {
+    "name": "Cielo"
+  },
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Taipei Day Trip",
+    "shortDescription": "搜尋台北景點並建立一日遊預定。",
+    "longDescription": "透過台北一日遊 MCP 搜尋景點，整理日期與時段，建立預定並顯示付款頁面連結。",
+    "developerName": "Cielo",
+    "category": "Travel",
+    "capabilities": ["Search", "Write"],
+    "defaultPrompt": [
+      "預定台北市一日遊行程"
+    ]
+  },
+  "mcpServers": "./.mcp.json"
+}

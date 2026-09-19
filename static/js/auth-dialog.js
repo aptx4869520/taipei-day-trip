@@ -99,8 +99,9 @@ async function checkSignInStatus() {
     }
 
     authTriggers.forEach((trigger) => {
+      trigger.setAttribute("href", isSignedIn ? "/member" : "#");
       trigger.textContent = isSignedIn
-        ? "登出系統"
+        ? "會員中心"
         : "登入/註冊";
     });
   } catch (error) {
@@ -266,13 +267,14 @@ async function checkSignInStatus() {
   }
 
   authTriggers.forEach((trigger) => {
-    trigger.addEventListener("click", () => {
+    trigger.addEventListener("click", async (event) => {
+      event.preventDefault();
+      await checkSignInStatus();
       if (isSignedIn) {
-        localStorage.removeItem("token");
-        window.location.reload();
+        window.location.href = "/member";
         return;
       }
-
+      event.preventDefault();
       openDialog();
     });
   });

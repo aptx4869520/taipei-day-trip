@@ -99,3 +99,11 @@ CREATE TABLE IF NOT EXISTS payments (
     CONSTRAINT uq_payments_order UNIQUE (order_number),
     CONSTRAINT fk_payments_order FOREIGN KEY (order_number) REFERENCES orders (number)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS member_tokens (
+    user_id BIGINT PRIMARY KEY,
+    token_hash CHAR(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+    CONSTRAINT uq_member_tokens_hash UNIQUE (token_hash),
+    CONSTRAINT fk_member_tokens_user FOREIGN KEY (user_id)
+        REFERENCES users (id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
